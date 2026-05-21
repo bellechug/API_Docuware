@@ -1,154 +1,83 @@
 const DWparameters = require('./DWValidationSettings');
-const validator = require('validator');	
-const unirest = require('unirest');
-
-
+const validator = require('validator');
 
 exports.checkValues = function (DWInputValues) {
-	var invoiceNo = this.getFieldValue(DWInputValues.Values, DWparameters.fieldNameDOCNUMBER);
-	var invoiceDate = this.getFieldValue(DWInputValues.Values, DWparameters.fieldNameDOCDATE);
-	var supplierID = this.getFieldValue(DWInputValues.Values, DWparameters.fieldNameSUPPLIER);	
+  const fields = DWInputValues.Values;
 
-	return new Promise((resolve, reject) => {
-		this.hasAmountOnInvoices(DWInputValues.Values)
-		.then(success => {
-			if (!success) {
-				throw new Error('Amount must be provided for an invoice');
-			}
+  // ===== DOCTYPE =====
+  const docTypeField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameDOCTYPE
+  );
 
-			return success;
-		})
- 		.then(success => this.isDuplicateInvoice(DWInputValues.FileCabinetGuid, invoiceNo, invoiceDate, supplierID))
- 		.then(success => {
-			if (!success) {
-				throw new Error('There is already an invoice stored (#'+ invoiceNo +' from:'+ invoiceDate +' - SupplierID:' + supplierID + ')');
-			}
+  if (!docTypeField) {
+    return Promise.resolve(true);
+  }
 
-			return success;
-		})
-		.then(success => this.hasProjectOnQuote(DWInputValues.Values))
-		.then(success => {
-			if (!success) {
-				throw new Error('Please fill the project accordingly');
-			}
+  const isInvoice =
+    validator.contains(
+      String(docTypeField.Item).toLowerCase(),
+      DWparameters.TRIGGER_STRING_DOCTYPE_INVOICE_FR.toLowerCase()
+    ) ||
+    validator.contains(
+      String(docTypeField.Item).toLowerCase(),
+      DWparameters.TRIGGER_STRING_DOCTYPE_INVOICE.toLowerCase()
+    );
 
-			return success;
-		})
-		.then(success => this.isDueDateInFuture(DWInputValues.Values))
-		.then(success => {
-			if (!success) {
-				throw new Error('Due date must be in future');
-			}
+  console.log('Is invoice ?', isInvoice);
 
-			return success;
-		})
-		.then(success => this.isSupplierExisting(DWInputValues.Values))
-		.then(success => {
-			if (!success) {
-				throw new Error('SupplierID could not be found CRM');
-			}
+  // ===== MONTANTS =====
+  const montantHTField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameMONTANT_HT
+  );
 
-			return success;
-		})
-		.then(success => resolve(true))
-		.catch(function (error){
-			reject(error);
-		})
-	});
-}
+  const montantTvaField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameMONTANT_TVA
+  );
 
+  const montantTTCField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameMONTANT_TTC
+  );
 
-exports.getFieldValue = function (DWIndexFieldCollection, fieldName) {
-	var field = DWIndexFieldCollection.find(x => x.FieldName == fieldName);
-	if (field === undefined) {
-		return;
-	}
+  // HT et TTC obligatoires
+  if (!montantHTField || !montantTTCField) {
+    console.log('Montant HT ou TTC manquant -> document invalide');
+    return Promise.resolve(false);
+  }
 
-	return field.Item;
-}
+  const montantHT = parseFloat(
+    String(montantHTField.Item).replace(',', '.')
+  );
 
-exports.checkOnMandatoryFields = function (DWFields, triggerContains, mandatoryFieldName) {
-	var docTypeField = this.getFieldValue(DWFields, DWparameters.fieldNameDOCTYPE);
-	
-	//there is no docTypeField return from here
-	if (docTypeField === undefined) {
-	 return true;
-	}
-	
-	var isTriggeredField = validator.contains(docTypeField.toLowerCase(), triggerContains);
-	
-	if (!isTriggeredField) {
-		return true;
-	}
-	
-	var mandatoryField = this.getFieldValue(DWFields, mandatoryFieldName);
-	return (mandatoryField != undefined);
-	
-}
+  const montantTTC = parseFloat(
+    String(montantTTCField.Item).replace(',', '.')
+  );
 
-exports.hasAmountOnInvoices = function (DWFields) {
-	return Promise.resolve(this.checkOnMandatoryFields(DWFields, DWparameters.TRIGGER_STRING_DOCTYPE_INVOICE, DWparameters.fieldNameAMOUNT));
-}
+  // TVA optionnelle
+  const montantTVA = montantTvaField
+    ? parseFloat(String(montantTvaField.Item).replace(',', '.'))
+    : 0;
 
-exports.hasProjectOnQuote = function (DWFields) {
-	return Promise.resolve(this.checkOnMandatoryFields(DWFields, DWparameters.TRIGGER_STRING_DOCTYPE_QUOTE, DWparameters.fieldNamePROJECT));
-}
+  const calculatedTTC = montantHT + montantTVA;
 
-exports.isDueDateInFuture = function (DWFields) {
-	var dueToField = DWFields.find(x => (x.FieldName === DWparameters.fieldNameDATE));
- 	if (dueToField === undefined) {
-		return true;
-	}
-	   
-	return Promise.resolve(validator.isAfter(dueToField.Item));
-}
+  const round2 = v => Math.round(v * 100) / 100;
 
-exports.isDuplicateInvoice = function (fileCabinetGUID, invoiceNo, invoiceDate, supplierID) {
-	return new Promise((resolve, reject) => {	
-		var CookieJar = unirest.jar(true);
+  const expectedTTC = round2(calculatedTTC);
+  const actualTTC = round2(montantTTC);
 
-		//logon to DW PLATFORM and retrieve cookie;
-		unirest.post(DWparameters.DWPlatformUrl + '/Account/Logon')
-		.headers({'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded'})
-		.jar(CookieJar)
-		.send({ 'UserName': DWparameters.DWPlatformUser, 'Password': DWparameters.DWPlatfromPassword, 'Organization': DWparameters.DWPlatformOrganization, 'RememberMe': false, 'RedirectToMyselfInCaseOfError': true })
-		.end(function (response) {
-			unirest.post(DWparameters.DWPlatformUrl + '/FileCabinets/'+ fileCabinetGUID +'/Query/DialogExpression?dialogId='+ DWparameters.DWSearchDialogGUIDForInvoiceSearch +'&format=table')
-			.headers({'Accept': 'application/json', 'Content-Type': 'application/json'})
-			.jar(CookieJar)
-			.send({ 'Condition':[
-				{ 'DBName':DWparameters.fieldNameDOCNUMBER, 'Value': [invoiceNo] },
-				{ 'DBName':DWparameters.fieldNameDOCDATE, 'Value': [invoiceDate, null] },
-				{ 'DBName':DWparameters.fieldNameSUPPLIER, 'Value': [supplierID, null] },  
-			],
-			'SortOrder':[],'ForceRefresh':true,'FlagConditions':{'IncludeCheckedOut':false},'Operation':'And','AdditionalResultFields':[],'Start':0,'Count':1})
-			.end(function (response) {
-				if (response.error) {
-					return reject(new Error(response.error.message));
-				}
+  const tolerance = 0.01;
 
+  const isTTCValid =
+    Math.abs(expectedTTC - actualTTC) <= tolerance;
 
-				try {
-					var resultCount = response.body.Count.Value;
-					return resolve(resultCount == 0);				
-				} catch (error) {
-					return reject(new Error("Unable to retrieve similar invoices. Error:" + error));
-				}
-			});
-		});
-	})
-}
+  console.log('HT:', montantHT);
+  console.log('TVA:', montantTVA);
+  console.log('TTC attendu:', expectedTTC);
+  console.log('TTC document:', actualTTC);
+  console.log('Montant TTC valide ?', isTTCValid);
 
+  if (isInvoice && !isTTCValid) {
+    return Promise.resolve(false);
+  }
 
-exports.isSupplierExisting = function (DWFields) {
-	var supplierID = this.getFieldValue(DWFields, DWparameters.fieldNameSUPPLIER);
-
-	//setup connection to database
-	//....
-
-	//query for supplier in CRM
-	//....
-	var doesSupplierExistInCRM = (supplierID == 4711);
-	
-	return Promise.resolve(doesSupplierExistInCRM);
-}
+  return Promise.resolve(true);
+};

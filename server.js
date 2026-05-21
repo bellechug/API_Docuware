@@ -55,7 +55,7 @@ app.use('/api', router);
 
 // START THE SERVER
 // =============================================================================
-var port = process.env.PORT || 4444;        // set our port
+var port = app.listen(port, '0.0.0.0');       // set our port
 
 // Strait http
 //app.listen(port);
