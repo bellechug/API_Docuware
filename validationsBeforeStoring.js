@@ -1,8 +1,6 @@
 const DWparameters = require('./DWValidationSettings');
 const validator = require('validator');
 
-console.log('DOCTYPe:', docTypeField.Item);
-console.log('Is invoice ?', isInvoice);
 
 exports.checkValues = function (DWInputValues) {
   const fields = DWInputValues.Values;
