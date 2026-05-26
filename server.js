@@ -55,19 +55,12 @@ app.use('/api', router);
 
 // START THE SERVER
 // =============================================================================
-var port = app.listen(port, '0.0.0.0');       // set our port
 
-// Strait http
-//app.listen(port);
+const port = process.env.PORT || 3000;
 
-// HTTPS TLS 1.2 only
-// create cert files openssl req -nodes -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -subj "/CN=localhost"  
-https.createServer( {
-		key: fs.readFileSync('key.pem'), 
-		cert: fs.readFileSync('cert.pem'),
-		secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_TLSv1 | constants.SSL_OP_NO_TLSv1_1
-	}, 
-	app)
-	.listen(port);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
+})
+
 
 console.log(`Validation REST service is up and running on port ${port} with http and https as well`);
