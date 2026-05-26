@@ -41,25 +41,23 @@ router.post('/', (req, res) => {
 
   console.log('Payload reçu :', DWInputValues);
 
-  validations.checkValues(DWInputValues)
-
-    .then(() => {
-      // ✅ OK
-      return res.json({
-        Status: 'OK',
-        Reason: ''
-      });
-    })
-
-    .catch(error => {
-      // ❌ FAIL
-      console.error('Erreur validation :', error.message);
-
-      return res.json({
+validations.checkValues(DWInputValues)
+.then(success => {
+    if (success) {
+        return res.json({ Status: 'OK', Reason: '' });
+    } else {
+        return res.json({
+            Status: 'Fail',
+            Reason: 'Montant TTC incorrect'
+        });
+    }
+})
+.catch(error => {
+    return res.json({
         Status: 'Fail',
         Reason: error.message
-      });
     });
+});
 });
 
 // =========================

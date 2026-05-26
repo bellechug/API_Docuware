@@ -74,11 +74,10 @@ exports.checkValues = function (DWInputValues) {
   // =========================
   // VALIDATION FINALE
   // =========================
-  if (isInvoice && !isValid) {
-    return Promise.reject(new Error(
-      `Montant TTC incorrect : attendu ${expectedTTC}, reçu ${actualTTC}`
-    ));
-  }
+
+if (isInvoice && !isValid) {
+  return Promise.resolve(false);
+}
 
   return Promise.resolve(true);
 };
