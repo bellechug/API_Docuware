@@ -48,7 +48,7 @@ validations.checkValues(DWInputValues)
     } else {
         return res.json({
             Status: 'Fail',
-            Reason: 'Montant TTC incorrect'
+            Reason: `Montant TTC incorrect : attendu ${expectedTTC}, reçu ${actualTTC}`
         });
     }
 })
