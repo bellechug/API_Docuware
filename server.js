@@ -55,7 +55,7 @@ validations.checkValues(DWInputValues)
     Reason: error.message
   });
 });
-
+});
 // =========================
 // REGISTER ROUTES
 // =========================
