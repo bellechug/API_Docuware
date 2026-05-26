@@ -7,6 +7,9 @@ const validations = require('./validationsBeforeStoring');
 
 const app = express();
 
+// ✅ AJOUT IMPORTANT
+const router = express.Router();
+
 // =========================
 // MIDDLEWARE
 // =========================
@@ -14,12 +17,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // =========================
-// ROUTER
+// ROUTES
 // =========================
+
+// ✅ Test API
+router.get('/', (req, res) => {
+  res.json({
+    Status: 'OK',
+    Reason: 'Validation API is running'
+  });
+});
+
+// ✅ Endpoint DocuWare
 router.post('/', async (req, res) => {
 
   try {
-
     const DWInputValues = req.body;
 
     if (!DWInputValues || !DWInputValues.Values) {
@@ -44,13 +56,16 @@ router.post('/', async (req, res) => {
     }
 
   } catch (error) {
+    console.error("Erreur serveur :", error);
+
     return res.json({
       Status: 'Fail',
-      Reason: 'Erreur serveur'
+      Reason: 'Erreur interne serveur'
     });
   }
 
 });
+
 // =========================
 // REGISTER ROUTES
 // =========================
@@ -64,4 +79,3 @@ const port = process.env.PORT || 3000;
 app.listen(port, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${port}`);
 });
-``
