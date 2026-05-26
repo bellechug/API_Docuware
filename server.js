@@ -16,45 +16,40 @@ app.use(bodyParser.json());
 // =========================
 // ROUTER
 // =========================
-const router = express.Router();
+router.post('/', async (req, res) => {
 
-// ✅ Test API
-router.get('/', (req, res) => {
-  res.json({
-    Status: 'OK',
-    Reason: 'Validation API is running'
-  });
-});
+  try {
 
-// ✅ Endpoint DocuWare
-router.post('/', (req, res) => {
+    const DWInputValues = req.body;
 
-  const DWInputValues = req.body;
+    if (!DWInputValues || !DWInputValues.Values) {
+      return res.json({
+        Status: 'Fail',
+        Reason: 'Payload invalide'
+      });
+    }
 
-  // Sécurité
-  if (!DWInputValues || !DWInputValues.Values) {
+    const result = await validations.checkValues(DWInputValues);
+
+    if (result.success) {
+      return res.json({
+        Status: 'OK',
+        Reason: ''
+      });
+    } else {
+      return res.json({
+        Status: 'Fail',
+        Reason: result.message
+      });
+    }
+
+  } catch (error) {
     return res.json({
       Status: 'Fail',
-      Reason: 'Invalid payload'
+      Reason: 'Erreur serveur'
     });
   }
 
-  console.log('Payload reçu :', DWInputValues);
-
-validations.checkValues(DWInputValues)
-.then(success => {
-  return res.json({
-    Status: 'OK',
-    Reason: ''
-  });
-})
-
-.catch(error => {
-  return res.json({
-    Status: 'Fail',
-    Reason: error.message
-  });
-});
 });
 // =========================
 // REGISTER ROUTES
