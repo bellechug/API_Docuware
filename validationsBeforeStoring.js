@@ -1,43 +1,84 @@
 const DWparameters = require('./DWValidationSettings');
 const validator = require('validator');
 
-
 exports.checkValues = function (DWInputValues) {
 
   const fields = DWInputValues.Values;
 
   console.log('Fields reçus :', fields);
 
-  // ===== RÉCUPÉRATION DES CHAMPS =====
-  const montantHTField = fields.find(f => f.FieldName === 'MONTANT_HT');
-  const montantTvaField = fields.find(f => f.FieldName === 'MONTANT_TVA');
-  const montantTTCField = fields.find(f => f.FieldName === 'MONTANT_TTC');
+  // =========================
+  // DOCTYPE
+  // =========================
+  const docTypeField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameDOCTYPE
+  );
 
-  console.log('HT:', montantHTField);
-  console.log('TVA:', montantTvaField);
-  console.log('TTC:', montantTTCField);
-
-  if (!montantHTField || !montantTTCField) {
-    console.log('Champs manquants');
-    return Promise.resolve(false);
+  if (!docTypeField) {
+    console.log('Pas de DOCTYPE → on laisse passer');
+    return Promise.resolve(true);
   }
 
-  const montantHT = parseFloat(String(montantHTField.Item).replace(',', '.'));
-  const montantTVA = montantTvaField ? parseFloat(String(montantTvaField.Item).replace(',', '.')) : 0;
-  const montantTTC = parseFloat(String(montantTTCField.Item).replace(',', '.'));
+  const value = String(docTypeField.Item).toLowerCase();
 
-  const expectedTTC = Math.round((montantHT + montantTVA) * 100) / 100;
-  const actualTTC = Math.round(montantTTC * 100) / 100;
+  const isInvoice =
+    value.includes('facture') ||
+    value.includes('invoice');
 
+  console.log('Type document :', value);
+  console.log('Is invoice ?', isInvoice);
+
+  // =========================
+  // MONTANTS
+  // =========================
+  const montantHTField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameMONTANT_HT
+  );
+
+  const montantTvaField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameMONTANT_TVA
+  );
+
+  const montantTTCField = fields.find(
+    f => f.FieldName === DWparameters.fieldNameMONTANT_TTC
+  );
+
+  if (!montantHTField || !montantTTCField) {
+    return Promise.reject(new Error('Montants manquants'));
+  }
+
+  const montantHT = parseFloat(
+    String(montantHTField.Item).replace(',', '.')
+  );
+
+  const montantTVA = montantTvaField
+    ? parseFloat(String(montantTvaField.Item).replace(',', '.'))
+    : 0;
+
+  const montantTTC = parseFloat(
+    String(montantTTCField.Item).replace(',', '.')
+  );
+
+  const round2 = v => Math.round(v * 100) / 100;
+
+  const expectedTTC = round2(montantHT + montantTVA);
+  const actualTTC = round2(montantTTC);
+
+  console.log('HT:', montantHT);
+  console.log('TVA:', montantTVA);
   console.log('TTC attendu:', expectedTTC);
   console.log('TTC reçu:', actualTTC);
 
-  // ✅ TEST SIMPLE
-  if (Math.abs(expectedTTC - actualTTC) > 0.01) {
-    console.log('❌ ERREUR DETECTEE');
-    return Promise.resolve(false);
+  const isValid = Math.abs(expectedTTC - actualTTC) <= 0.01;
+
+  // =========================
+  // VALIDATION FINALE
+  // =========================
+  if (isInvoice && !isValid) {
+    return Promise.reject(new Error(
+      `Montant TTC incorrect : attendu ${expectedTTC}, reçu ${actualTTC}`
+    ));
   }
 
-  console.log('✅ OK');
   return Promise.resolve(true);
 };
