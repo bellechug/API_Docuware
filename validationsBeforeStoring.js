@@ -7,20 +7,25 @@ exports.checkValues = function (DWInputValues) {
   const montantTTCField = fields.find(f => f.FieldName === 'MONTANT_TTC');
 
   if (!montantHTField || !montantTTCField) {
-    return Promise.resolve(false);
+    throw new Error("Montants manquants (HT ou TTC)");
   }
 
   const montantHT = parseFloat(String(montantHTField.Item).replace(',', '.'));
   const montantTVA = montantTvaField ? parseFloat(String(montantTvaField.Item).replace(',', '.')) : 0;
   const montantTTC = parseFloat(String(montantTTCField.Item).replace(',', '.'));
 
-  const expectedTTC = Math.round((montantHT + montantTVA) * 100) / 100;
-  const actualTTC = Math.round(montantTTC * 100) / 100;
+  const round2 = v => Math.round(v * 100) / 100;
+
+  const expectedTTC = round2(montantHT + montantTVA);
+  const actualTTC = round2(montantTTC);
 
   if (Math.abs(expectedTTC - actualTTC) > 0.01) {
-    return Promise.resolve(false);
+
+    throw new Error(
+      `Montant TTC incorrect : attendu ${expectedTTC} (HT + TVA), reçu ${actualTTC}`
+    );
+
   }
 
   return Promise.resolve(true);
 };
-``

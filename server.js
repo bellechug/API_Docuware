@@ -43,21 +43,17 @@ router.post('/', (req, res) => {
 
 validations.checkValues(DWInputValues)
 .then(success => {
-    if (success) {
-        return res.json({ Status: 'OK', Reason: '' });
-    } else {
-        return res.json({
-            Status: 'Fail',
-            Reason: `Montant TTC incorrect : attendu ${expectedTTC}, reçu ${actualTTC}`
-        });
-    }
+  return res.json({
+    Status: 'OK',
+    Reason: ''
+  });
 })
+
 .catch(error => {
-    return res.json({
-        Status: 'Fail',
-        Reason: error.message
-    });
-});
+  return res.json({
+    Status: 'Fail',
+    Reason: error.message
+  });
 });
 
 // =========================
