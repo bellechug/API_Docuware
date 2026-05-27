@@ -14,15 +14,7 @@ const router = express.Router();
 // Securité 
 // =========================
 
-	const apiKey = req.headers['x-api-key'];
-	const SECRET_KEY = "123456";
 
-	if (apiKey !== SECRET_KEY){
-		return res.json({
-			Status : 'Fail',
-			Reason : 'Accès non autorisé' 
-		})
-	}
 
 // =========================
 // MIDDLEWARE
@@ -44,6 +36,16 @@ router.get('/', (req, res) => {
 
 // ✅ Endpoint DocuWare
 router.post('/', async (req, res) => {
+
+	const apiKey = req.headers['x-api-key'];
+	const SECRET_KEY = "123456";
+
+	if (apiKey !== SECRET_KEY){
+		return res.json({
+			Status : 'Fail',
+			Reason : 'Accès non autorisé' 
+		})
+	}
 
   try {
     const DWInputValues = req.body;
