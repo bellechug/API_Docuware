@@ -42,8 +42,10 @@ router.post('/', async (req, res) => {
 	}
 
 	
-const clientIp = req.ip;
-console.log("IP :", clientIp)
+
+const clientIp = req.headers['x-forwarded-for'] || req.ip;
+console.log("IP CLIENT =", clientIp);
+
 
   try {
     const DWInputValues = req.body;
