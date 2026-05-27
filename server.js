@@ -41,6 +41,10 @@ router.post('/', async (req, res) => {
 		})
 	}
 
+	
+const clientIp = req.ip;
+console.log("IP :", clientIp)
+
   try {
     const DWInputValues = req.body;
 
@@ -76,11 +80,6 @@ router.post('/', async (req, res) => {
   }
 
 });
-
-
-
-const clientIp = req.ip;
-console.log("IP :", clientIp)
 
 
 // =========================
