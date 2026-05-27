@@ -16,9 +16,12 @@ exports.checkValues = function (DWInputValues) {
     }
 
     const montantHT = parseFloat(String(montantHTField.Item).replace(',', '.'));
+    
     if (montantHT <= 0){
-      message: 'Le Montant HT est soit = ou inférieur à 0'
-    }
+      return {
+        success: false,
+        message: 'Le Montant HT est soit = ou inférieur à 0'
+    }}
 
     const montantTVA = montantTvaField 
       ? parseFloat(String(montantTvaField.Item).replace(',', '.'))
