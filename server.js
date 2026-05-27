@@ -32,13 +32,16 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
 
 	
+	const tokenField = req.body.Values.find(
+	f => f.FieldName === 'SECURITE_TOKEN'
+	);
+
+	const apiKey = tokenField ? tokenField.Item : null;
 	const SECRET_KEY = process.env.API_KEY;
 
 	if (!SECRET_KEY){
 		console.error("API_KEY non définie !");
 	}
-
-	const apiKey = req.body.API_KEY;
 	
 	if (!apiKey){
 		return res.json({
