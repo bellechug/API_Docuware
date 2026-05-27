@@ -32,7 +32,7 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
 
 	const apiKey = req.headers['x-api-key'];
-	const SECRET_KEY = process.env.API_KEY,
+	const SECRET_KEY = process.env.API_KEY;
 
 	if (apiKey !== SECRET_KEY){
 		return res.json({
