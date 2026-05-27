@@ -53,7 +53,6 @@ router.post('/', async (req, res) => {
 				Reason: 'Clé API invalide'
 			})
 		}
-	}
 
 	
 
