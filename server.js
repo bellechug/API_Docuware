@@ -77,6 +77,12 @@ router.post('/', async (req, res) => {
 
 });
 
+
+
+const clientIp = req.ip;
+console.log("IP :", clientIp)
+
+
 // =========================
 // REGISTER ROUTES
 // =========================
