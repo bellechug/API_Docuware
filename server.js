@@ -11,12 +11,6 @@ const app = express();
 const router = express.Router();
 
 // =========================
-// Securité 
-// =========================
-
-
-
-// =========================
 // MIDDLEWARE
 // =========================
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -38,7 +32,7 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
 
 	const apiKey = req.headers['x-api-key'];
-	const SECRET_KEY = "123456";
+	const SECRET_KEY = process.env.API_KEY,
 
 	if (apiKey !== SECRET_KEY){
 		return res.json({
