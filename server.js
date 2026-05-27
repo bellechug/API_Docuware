@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
 		console.error("API_KEY non définie !");
 	}
 
-	const apiKey = req.headers['x-api-key'];
+	const apiKey = req.body.API_KEY;
 	
 	if (!apiKey){
 		return res.json({
