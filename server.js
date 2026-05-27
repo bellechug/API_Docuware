@@ -10,6 +10,8 @@ const app = express();
 // ✅ AJOUT IMPORTANT
 const router = express.Router();
 
+
+
 // =========================
 // MIDDLEWARE
 // =========================
@@ -40,6 +42,15 @@ router.post('/', async (req, res) => {
         Reason: 'Payload invalide'
       });
     }
+	const apiKey = req.headers['x-api-key'];
+	const SECRET_KEY = "123456";
+
+	if (apiKey !== SECRET_KEY){
+		return res.json({
+			Status : 'Fail',
+			Reason : 'Accès non autorisé' 
+		})
+	}
 
     const result = await validations.checkValues(DWInputValues);
 
