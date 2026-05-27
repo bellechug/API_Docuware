@@ -31,14 +31,28 @@ router.get('/', (req, res) => {
 // ✅ Endpoint DocuWare
 router.post('/', async (req, res) => {
 
-	const apiKey = req.headers['x-api-key'];
+	
 	const SECRET_KEY = process.env.API_KEY;
 
-	if (apiKey !== SECRET_KEY){
+	if (!SECRET_KEY){
+		console.error("API_KEY non définie !");
+	}
+
+	const apiKey = req.headers['x-api-key'];
+	
+	if (!apiKey){
 		return res.json({
 			Status : 'Fail',
-			Reason : 'Accès non autorisé' 
-		})
+			Reason : 'Clé API manquante' 
+		});
+	}
+
+		if (apiKey !== SECRET_KEY){
+			return res.json({
+				Status: 'Fail',
+				Reason: 'Clé API invalide'
+			})
+		}
 	}
 
 	
